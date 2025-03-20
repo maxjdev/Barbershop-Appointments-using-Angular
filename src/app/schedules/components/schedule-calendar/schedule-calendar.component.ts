@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Inject, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { SERVICES_TOKEN } from '../../../services/service.token';
 import { DialogManagerService } from '../../../services/dialog-manager.service';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -6,6 +6,7 @@ import { ClientScheduleAppointmentModel, SaveScheduleModel, ScheduleAppointement
 import { FormControl, FormsModule, NgForm } from '@angular/forms';
 import { IDialogManagerService } from '../../../services/idialog-manager.service';
 import { CommonModule } from '@angular/common';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -39,12 +40,13 @@ import { Subscription } from 'rxjs';
   templateUrl: './schedule-calendar.component.html',
   styleUrl: './schedule-calendar.component.scss',
   providers: [
+    provideNativeDateAdapter(),
     {
       provide: SERVICES_TOKEN.DIALOG, useClass: DialogManagerService
     }
   ]
 })
-export class ScheduleCalendarComponent implements OnInit, AfterViewInit, OnChanges {
+export class ScheduleCalendarComponent implements OnDestroy, AfterViewInit, OnChanges {
 
   private subscription?: Subscription
 
@@ -56,7 +58,7 @@ export class ScheduleCalendarComponent implements OnInit, AfterViewInit, OnChang
 
   addingSchedule: boolean = false
 
-  newSchedule: SaveScheduleModel = { starAt: undefined, endAt: undefined, clientId: undefined }
+  newSchedule: SaveScheduleModel = { startAt: undefined, endAt: undefined, clientId: undefined }
 
   clientSelectFormControl = new FormControl()
 
@@ -83,7 +85,7 @@ export class ScheduleCalendarComponent implements OnInit, AfterViewInit, OnChang
     }
   }
 
-  ngOnInit(): void {
+  ngOnDestroy(): void {
     if (this.subscription) {
       this.subscription.unsubscribe()
     }
@@ -103,7 +105,7 @@ export class ScheduleCalendarComponent implements OnInit, AfterViewInit, OnChang
   onSubmit(form: NgForm) {
     const startAt = new Date(this._selected)
     const endAt = new Date(this._selected)
-    startAt.setHours(this.newSchedule.starAt!.getHours(), this.newSchedule.starAt!.getMinutes())
+    startAt.setHours(this.newSchedule.startAt!.getHours(), this.newSchedule.startAt!.getMinutes())
     endAt.setHours(this.newSchedule.endAt!.getHours(), this.newSchedule.endAt!.getMinutes())
     const saved: ClientScheduleAppointmentModel = {
       id: -1,
@@ -113,10 +115,11 @@ export class ScheduleCalendarComponent implements OnInit, AfterViewInit, OnChang
       clientId: this.newSchedule.clientId!,
       clientName: this.clients.find(c => c.id === this.newSchedule.clientId!)!.name
     }
+    this.monthSchedule.scheduledAppointments.push(saved)
     this.onScheduleClient.emit(saved)
     this.buildTable()
     form.resetForm()
-    this.newSchedule = { starAt: undefined, endAt: undefined, clientId: undefined }
+    this.newSchedule = { startAt: undefined, endAt: undefined, clientId: undefined }
   }
 
   requestDelete(schedule: ClientScheduleAppointmentModel) {
@@ -142,9 +145,9 @@ export class ScheduleCalendarComponent implements OnInit, AfterViewInit, OnChang
   }
 
   private buildTable() {
-    const appointments = this.monthSchedule.scheduleAppointments.filter(a =>
+    const appointments = this.monthSchedule.scheduledAppointments.filter(a =>
       this.monthSchedule.year === this._selected.getFullYear() &&
-      this.monthSchedule.month === this._selected.getMonth() &&
+      this.monthSchedule.month - 1 === this._selected.getMonth() &&
       a.day === this._selected.getDate()
     )
     this.dataSource = new MatTableDataSource<ClientScheduleAppointmentModel>(appointments);
