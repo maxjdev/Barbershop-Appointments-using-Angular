@@ -22,8 +22,8 @@
               <mat-icon>delete</mat-icon>
           </button>
 
-          <button mat-mini-fab extended matTooltip="atualizar" class="update-button"
-              (click)="onRequestUpdate(client)">
+          <button mat-mini-fab extended matTooltip="atualizar" class="update-button" (click)="update(client)">
+
               <mat-icon>edit</mat-icon>
           </button>
       </td>
@@ -34,4 +34,3 @@
 </table>
 
 <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons>
-</mat-paginator>
