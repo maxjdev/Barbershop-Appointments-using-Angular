@@ -13,7 +13,7 @@ import { ClientFormComponent } from '../components/client-form/client-form.compo
   selector: 'app-new-client',
   imports: [ClientFormComponent],
   templateUrl: './new-client.component.html',
-  styleUrl: './new-client.component.scss',
+  styleUrls: ['./new-client.component.scss'],
   providers: [
     { provide: SERVICES_TOKEN.HTTP.CLIENT, useClass: ClientsService },
     { provide: SERVICES_TOKEN.SNACKBAR, useClass: SnackbarManagerService }
@@ -21,7 +21,7 @@ import { ClientFormComponent } from '../components/client-form/client-form.compo
 })
 export class NewClientComponent implements OnDestroy {
 
-  private httpSubscription?: Subscription
+  private httpSubscription?: Subscription;
 
   constructor(
     @Inject(SERVICES_TOKEN.HTTP.CLIENT) private readonly httpService: ICLientService,
@@ -31,18 +31,21 @@ export class NewClientComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     if (this.httpSubscription) {
-      this.httpSubscription.unsubscribe()
+      this.httpSubscription.unsubscribe();
     }
   }
 
-  onSubmitClient(value: ClientModelForm) {
-
-    const { id, ...request } = value
-    this.httpSubscription = this.httpService.save(request).subscribe(_ => {
-      this.snackBarManager.show('Usuário cadastrado com sucesso')
-      this.router.navigate(['clients/list'])
-    })
+  onSubmitClient(value: ClientModelForm): void {
+    const { id, ...request } = value;
+    this.httpSubscription = this.httpService.save(request).subscribe({
+      next: () => {
+        this.snackBarManager.show('Usuário cadastrado com sucesso');
+        this.router.navigate(['clients/list']);
+      },
+      error: (err) => {
+        this.snackBarManager.show('Erro ao cadastrar usuário');
+        console.error('Error saving client:', err);
+      }
+    });
   }
-
-
 }
